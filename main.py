@@ -1,4 +1,4 @@
-from src.graph import graph
+﻿from src.graph import graph
 
 
 def main():
@@ -31,7 +31,32 @@ def main():
     print("\nRunning multi-agent workflow...")
     print("Planner -> Web Researcher -> Analyst -> Writer -> Reviewer\n")
 
-    result = graph.invoke(initial_state)
+    final_state = initial_state.copy()
+
+    node_names = {
+        "planner": "Planner",
+        "researcher": "Web Researcher",
+        "analyst": "Analyst",
+        "writer": "Writer",
+        "reviewer": "Reviewer",
+        "failure_handler": "Failure Handler",
+    }
+
+    for update in graph.stream(initial_state):
+        for node, values in update.items():
+            final_state.update(values)
+
+            print(f"✓ {node_names.get(node, node)} completed")
+
+            if node == "reviewer":
+                if values.get("approved"):
+                    print("  → Review approved")
+                elif values.get("revision_count", 0) < 2:
+                    print("  → Review rejected; sending back to Writer")
+                else:
+                    print("  → Review rejected twice; stopping")
+
+    result = final_state
 
     print("=" * 70)
     print("FINAL RESULT")
